@@ -76,3 +76,80 @@ function computeIntelligentScore(data) {
         pressureScore * pressureWeight)
   );
 }
+
+// Trends chart
+let trendsChart = null;
+
+function initTrendsChart(
+  labels = [],
+  usageData = [],
+  oxygenData = [],
+  scoreData = []
+) {
+  if (trendsChart) {
+    trendsChart.destroy();
+  }
+
+  const ctx = document.getElementById('trendsChart').getContext('2d');
+
+  trendsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Usage Hours',
+          data: usageData,
+          borderColor: '#667eea',
+          backgroundColor: 'rgba(102, 126, 234, 0.1)',
+          yAxisID: 'y',
+        },
+        {
+          label: 'Oxygen Level (%)',
+          data: oxygenData,
+          borderColor: '#2ecc71',
+          backgroundColor: 'rgba(46, 204, 113, 0.1)',
+          yAxisID: 'y1',
+        },
+        {
+          label: 'Therapy Score',
+          data: scoreData,
+          borderColor: '#e74c3c',
+          backgroundColor: 'rgba(231, 76, 60, 0.1)',
+          yAxisID: 'y2',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          title: { display: true, text: 'Usage Hours' },
+        },
+        y1: {
+          type: 'linear',
+          display: false,
+          position: 'right',
+        },
+        y2: {
+          type: 'linear',
+          display: false,
+          position: 'right',
+        },
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: 'Your 7-Day Therapy Trends',
+        },
+      },
+    },
+  });
+}
