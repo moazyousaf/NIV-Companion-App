@@ -44,3 +44,35 @@ function updateDashboard() {
   document.getElementById('respRate').textContent = demoData.resp_rate;
   document.getElementById('tidalVolume').textContent = demoData.tidal_volume;
 }
+
+// Compute intelligent therapy score (matching your algorithm)
+function computeIntelligentScore(data) {
+  const usageWeight = 0.25;
+  const oxygenWeight = 0.25;
+  const leakWeight = 0.15;
+  const respWeight = 0.15;
+  const pressureWeight = 0.2; // new weight for pressures
+
+  const usageScore = Math.min(data.usage_hours / 8, 1);
+  const oxygenScore = Math.min((data.oxygen_avg - 88) / 12, 1);
+  const leakScore = data.mask_leak ? 0.5 : 1;
+  const respScore = data.resp_rate >= 12 && data.resp_rate <= 20 ? 1 : 0.5;
+
+  // Example scoring for pressures (adjust ranges as needed)
+  const idealIPAP = 15; // example ideal
+  const idealEPAP = 5;
+  const ipapScore =
+    1 - Math.min(Math.abs(data.insp_pressure - idealIPAP) / 10, 1);
+  const epapScore =
+    1 - Math.min(Math.abs(data.exp_pressure - idealEPAP) / 5, 1);
+  const pressureScore = (ipapScore + epapScore) / 2;
+
+  return Math.round(
+    100 *
+      (usageScore * usageWeight +
+        oxygenScore * oxygenWeight +
+        leakScore * leakWeight +
+        respScore * respWeight +
+        pressureScore * pressureWeight)
+  );
+}
