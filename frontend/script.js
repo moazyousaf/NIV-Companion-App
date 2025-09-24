@@ -17,3 +17,30 @@ function switchTab(tabName) {
     load7DayTrends(currentPatientId);
   }
 }
+
+// Demo data and functionality
+const demoData = {
+  usage_hours: 7.2,
+  oxygen_avg: 94,
+  mask_leak: 17.5,
+  resp_rate: 16,
+  tidal_volume: 480,
+  minute_ventilation: 7.68,
+  insp_pressure: 16,
+  exp_pressure: 4,
+  therapy_score: 85,
+};
+
+// Update dashboard with demo data
+function updateDashboard() {
+  document.getElementById('therapyScore').textContent =
+    computeIntelligentScore(demoData);
+  document.getElementById('usageHours').textContent = demoData.usage_hours;
+  document.getElementById('oxygenLevel').textContent =
+    demoData.oxygen_avg + '%';
+  document.getElementById('maskLeak').textContent = demoData.mask_leak
+    ? 'Leak Detected'
+    : 'Good';
+  document.getElementById('respRate').textContent = demoData.resp_rate;
+  document.getElementById('tidalVolume').textContent = demoData.tidal_volume;
+}
