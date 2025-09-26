@@ -7,7 +7,7 @@ const PORT = 5000;
 
 app.use(cors());
 app.use(express.json());
-app.use('./patient', patientRouter); //use patient router
+app.use('/api/patient', patientRouter); //use patient router
 
 app.listen(PORT, (error) => {
   if (!error) {
