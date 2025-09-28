@@ -1,13 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db/config');
+const { authenticateToken, authorizeDoctor } = require('./authMiddleware');
+require('dotenv').config();
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 //router responses
 
 //List of all patients in the database
-router.get('/list', async (req, res) => {
+router.get('/list', authenticateToken, authorizeDoctor, async (req, res) => {
   try {
-    const query = 'SELECT id, name, email FROM patients ORDER BY id';
+    const query = 'SELECT id, name, email FROM users ORDER BY id';
     const result = await db.any(query);
     res.json(result);
   } catch (err) {
@@ -17,16 +21,24 @@ router.get('/list', async (req, res) => {
 });
 
 //Data of a specific patient
-router.get('/:id', async (req, res) => {
-  const id = req.params.id;
+router.get('/:id', authenticateToken, async (req, res) => {
+  const requestedId = req.params.id;
+  const user = req.user;
 
-  if (!id) {
-    res.status(404).send('Patient ID not valid');
+  if (!requestedId) {
+    return res.status(404).send('Patient ID not valid');
+  }
+
+  // Role check
+  if (user.role === 'patient' && user.id != requestedId) {
+    return res
+      .status(403)
+      .json({ error: 'Patients can only access their own data' });
   }
 
   try {
     const query = 'SELECT * FROM niv_data WHERE patient_id = $1';
-    const result = await db.any(query, [id]);
+    const result = await db.any(query, [requestedId]);
 
     if (!result[0]) return res.status(400).send('Patient ID not found');
 
@@ -40,14 +52,22 @@ router.get('/:id', async (req, res) => {
 });
 
 //Days available for a patient
-router.get('/:id/days', async (req, res) => {
-  const id = req.params.id;
+router.get('/:id/days', authenticateToken, async (req, res) => {
+  const requestedId = req.params.id;
+  const user = req.user;
 
-  if (!id) res.status(400).send('Patient ID not valid');
+  if (!requestedId) return res.status(400).send('Patient ID not valid');
+  // Role check
+  if (user.role === 'patient' && user.id != requestedId) {
+    return res
+      .status(403)
+      .json({ error: 'Patients can only access their own data' });
+  }
+
   try {
     const query =
       'SELECT DISTINCT timestamp::date AS day FROM niv_data WHERE patient_id = $1 ORDER BY day ASC;';
-    result = await db.any(query, [id]);
+    result = await db.any(query, [requestedId]);
     if (!result[0]) return res.status(400).send('Patient ID not found');
     res.json(result);
   } catch (err) {
@@ -58,13 +78,22 @@ router.get('/:id/days', async (req, res) => {
   }
 });
 
-router.get('/:id/day/:day', async (req, res) => {
-  const id = req.params.id;
+router.get('/:id/day/:day', authenticateToken, async (req, res) => {
+  const requestedId = req.params.id;
   const day = req.params.day;
+  const user = req.user;
 
-  if (!id || !day) {
+  if (!requestedId || !day) {
     return res.status(400).send('Patient ID or DAY is missing or invalid');
   }
+
+  // Role check
+  if (user.role === 'patient' && user.id != requestedId) {
+    return res
+      .status(403)
+      .json({ error: 'Patients can only access their own data' });
+  }
+
   try {
     const query =
       'SELECT \
@@ -80,8 +109,8 @@ router.get('/:id/day/:day', async (req, res) => {
       FROM niv_data \
       WHERE patient_id = $1 AND timestamp::date = $2::date';
 
-    const result = await db.any(query, [id, day]);
-    if (result[0].usage_hours == null || result.length == 0)
+    const result = await db.any(query, [requestedId, day]);
+    if (result.length == 0 || result[0].usage_hours == null)
       return res.status(400).send('No data found for this patient on this day');
     res.json(result);
   } catch (err) {
