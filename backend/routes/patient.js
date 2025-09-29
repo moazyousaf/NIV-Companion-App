@@ -11,7 +11,8 @@ const jwt = require('jsonwebtoken');
 //List of all patients in the database
 router.get('/list', authenticateToken, authorizeDoctor, async (req, res) => {
   try {
-    const query = 'SELECT id, name, email FROM users ORDER BY id';
+    const query =
+      "SELECT id, name, email FROM users WHERE role = 'patient' ORDER BY id";
     const result = await db.any(query);
     res.json(result);
   } catch (err) {
