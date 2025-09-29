@@ -153,3 +153,190 @@ function initTrendsChart(
     },
   });
 }
+
+//Load patients list in the dropdown(for the doctors)
+async function loadPatients() {
+  try {
+    console.log('Loading patients from API...');
+
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    const name = localStorage.getItem('name');
+    const id = localStorage.getItem('id');
+
+    const select = document.getElementById('patientSelect');
+    select.innerHTML = ''; // clear
+
+    if (!token) throw new Error('No token found, please login again');
+
+    if (role === 'patient') {
+      // ✅ PATIENT: show only their own name
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = name;
+      select.appendChild(option);
+
+      updateApiStatus('✅ Logged in as patient', 'success');
+      return; // stop here
+    }
+
+    // ✅ DOCTOR: fetch full list
+    const response = await fetch('http://localhost:5000/api/patient/list', {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    const patients = await response.json();
+    console.log('API Response:', patients);
+
+    select.innerHTML =
+      '<option value="demo">Demo Patient (Sample Data)</option>';
+
+    if (patients && Array.isArray(patients) && patients.length > 0) {
+      patients.forEach((p) => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = `${p.name}${p.email ? ' (' + p.email + ')' : ''}`;
+        select.appendChild(option);
+      });
+
+      console.log(`Successfully loaded ${patients.length} patients`);
+
+      // Update status message
+      updateApiStatus(
+        `✅ Connected - Found ${patients.length} patients`,
+        'success'
+      );
+    } else {
+      console.log('No patients found in database');
+      updateApiStatus(
+        '⚠️ Connected but no patients found in database',
+        'warning'
+      );
+    }
+
+    select.addEventListener('change', (e) => {
+      const selectedValue = e.target.value;
+      currentPatientId = selectedValue === 'demo' ? 'demo' : selectedValue;
+      if (selectedValue === 'demo') updateDashboard();
+      else {
+        loadPatientDays(selectedValue);
+        load7DayTrends(selectedValue);
+      }
+    });
+
+    // Auto-load first real patient if available
+    if (patients && patients.length > 0) {
+      console.log('Auto-loading first patient:', patients[0].name);
+      select.value = patients[0].id;
+      currentPatientId = patients[0].id;
+      loadPatientData(patients[0].id);
+      loadPatientDays(patients[0].id);
+      load7DayTrends(patients[0].id);
+    } else {
+      // No patients, stay in demo mode
+      currentPatientId = 'demo';
+      updateDashboard();
+    }
+  } catch (error) {
+    console.error('API Error:', error);
+    updateApiStatus(`❌ API Error: ${error.message}`, 'error');
+
+    // Fall back to demo mode
+    currentPatientId = 'demo';
+    updateDashboard();
+  }
+}
+
+//load patient data
+async function loadPatientData(id) {
+  try {
+    console.log(`Loading data for patient ID: ${id}`);
+    // Fallback: try full profile endpoint
+    console.log('Summary not available, trying profile endpoint...');
+    const response = await fetch(`http://localhost:5000/api/patient/${id}`, {
+      headers: {
+        'Authorization': 'Bearer ' + token,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const profileData = await response.json();
+    patientData = profileData.latest_data;
+    console.log('Profile data loaded:', profileData);
+
+    if (!patientData) {
+      console.log('No data available for this patient');
+      displayNoDataMessage();
+      return;
+    }
+
+    // Update dashboard with patient data
+    document.getElementById('therapyScore').textContent =
+      patientData.intelligent_score || computeIntelligentScore(patientData);
+    document.getElementById('usageHours').textContent =
+      patientData.usage_hours || 'N/A';
+    document.getElementById('oxygenLevel').textContent = patientData.oxygen_avg
+      ? patientData.oxygen_avg + '%'
+      : 'N/A';
+    document.getElementById('maskLeak').textContent = patientData.mask_leak
+      ? 'Leak Detected'
+      : 'Good';
+    document.getElementById('respRate').textContent =
+      patientData.resp_rate || 'N/A';
+    document.getElementById('tidalVolume').textContent =
+      patientData.tidal_volume || 'N/A';
+    document.getElementById('minuteVentilation').textContent =
+      patientData.minute_ventilation || 'N/A';
+
+    updateRangeIndicators();
+    console.log('Dashboard updated with patient data');
+  } catch (error) {
+    console.error('Error loading patient data:', error);
+    displayNoDataMessage();
+  }
+}
+
+function updateApiStatus(message, type) {
+  const statusElement =
+    document.querySelector('.demo-mode') || createStatusElement();
+  statusElement.innerHTML = message;
+
+  // Update styling based on type
+  statusElement.className = 'demo-mode';
+  if (type === 'success') {
+    statusElement.style.background = '#d4edda';
+    statusElement.style.color = '#155724';
+  } else if (type === 'warning') {
+    statusElement.style.background = '#fff3cd';
+    statusElement.style.color = '#856404';
+  } else if (type === 'error') {
+    statusElement.style.background = '#f8d7da';
+    statusElement.style.color = '#721c24';
+  }
+}
+
+function createStatusElement() {
+  const statusElement = document.createElement('div');
+  statusElement.className = 'demo-mode';
+  document
+    .querySelector('.container')
+    .insertBefore(statusElement, document.querySelector('nav'));
+  return statusElement;
+}
+
+// Initialize app
+document.addEventListener('DOMContentLoaded', function () {
+  console.log('=== NIV Companion App Starting ===');
+  loadPatients();
+
+  // Only show demo dashboard if we haven't loaded real patients
+  setTimeout(() => {
+    if (currentPatientId === 'demo') {
+      updateDashboard();
+    }
+  }, 1000);
+});
