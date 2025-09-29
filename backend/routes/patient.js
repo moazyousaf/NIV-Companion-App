@@ -67,7 +67,7 @@ router.get('/:id/days', authenticateToken, async (req, res) => {
 
   try {
     const query =
-      'SELECT DISTINCT timestamp::date AS day FROM niv_data WHERE patient_id = $1 ORDER BY day ASC;';
+      "SELECT DISTINCT TO_CHAR(timestamp::date, 'YYYY-MM-DD') AS day FROM niv_data WHERE patient_id = $1 ORDER BY day ASC";
     result = await db.any(query, [requestedId]);
     if (!result[0]) return res.status(400).send('Patient ID not found');
     res.json(result);
@@ -96,19 +96,18 @@ router.get('/:id/day/:day', authenticateToken, async (req, res) => {
   }
 
   try {
-    const query =
-      'SELECT \
-        SUM(usage_hours) AS usage_hours,\
-        ROUND(AVG(oxygen_avg)::numeric,2) AS oxygen_avg,\
-        ROUND(AVG(resp_rate)::numeric,2) AS resp_rate, \
-        ROUND(AVG(mask_leak)::numeric,2) AS mask_leak, \
-        ROUND(AVG(tidal_volume)::numeric,2) AS tidal_volume, \
-        ROUND(AVG(minute_ventilation)::numeric,2) AS minute_ventilation, \
-        ROUND(AVG(insp_pressure)::numeric,2) AS insp_pressure, \
-        ROUND(AVG(exp_pressure)::numeric,2) AS exp_pressure, \
-        ROUND(AVG(insp_time)::numeric,2) AS insp_time \
-      FROM niv_data \
-      WHERE patient_id = $1 AND timestamp::date = $2::date';
+    const query = `SELECT 
+        SUM(usage_hours) AS usage_hours,
+        ROUND(AVG(oxygen_avg)::numeric,2) AS oxygen_avg,
+        ROUND(AVG(resp_rate)::numeric,2) AS resp_rate, 
+        ROUND(AVG(mask_leak)::numeric,2) AS mask_leak, 
+        ROUND(AVG(tidal_volume)::numeric,2) AS tidal_volume, 
+        ROUND(AVG(minute_ventilation)::numeric,2) AS minute_ventilation, 
+        ROUND(AVG(insp_pressure)::numeric,2) AS insp_pressure,
+        ROUND(AVG(exp_pressure)::numeric,2) AS exp_pressure, 
+        ROUND(AVG(insp_time)::numeric,2) AS insp_time 
+      FROM niv_data 
+      WHERE patient_id = $1 AND timestamp::date = $2::date`;
 
     const result = await db.any(query, [requestedId, day]);
     if (result.length == 0 || result[0].usage_hours == null)
