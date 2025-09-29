@@ -252,8 +252,9 @@ async function loadPatients() {
 async function loadPatientData(id) {
   try {
     console.log(`Loading data for patient ID: ${id}`);
-    // Fallback: try full profile endpoint
-    console.log('Summary not available, trying profile endpoint...');
+
+    const token = localStorage.getItem('token');
+
     const response = await fetch(`http://localhost:5000/api/patient/${id}`, {
       headers: {
         'Authorization': 'Bearer ' + token,
@@ -296,6 +297,76 @@ async function loadPatientData(id) {
     console.log('Dashboard updated with patient data');
   } catch (error) {
     console.error('Error loading patient data:', error);
+    displayNoDataMessage();
+  }
+}
+
+//load patient days
+async function loadPatientDays(patientId) {
+  try {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(
+      `http://localhost:5000/api/patient/${patientId}/days`,
+      {
+        headers: {
+          'Authorization': 'Bearer ' + token,
+        },
+      }
+    );
+    const days = await response.json();
+    const select = document.getElementById('daySelect');
+    select.innerHTML = days
+      .map((d) => `<option value="${d.day}">${d.day}</option>`)
+      .join('');
+
+    // Load the first day by default
+    if (days.length) loadPatientDay(patientId, select.value);
+
+    select.addEventListener('change', (e) => {
+      loadPatientDay(patientId, e.target.value);
+    });
+  } catch (err) {
+    console.error('Error loading patient days:', err);
+  }
+}
+
+async function loadPatientDay(patientId, day) {
+  try {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(
+      `http://localhost:5000/api/patient/${patientId}/day/${day}`,
+      {
+        headers: {
+          'Authorization': 'Bearer ' + token,
+        },
+      }
+    );
+    const dataArr = await response.json();
+    const data = dataArr[0];
+
+    const score = computeIntelligentScore({
+      usage_hours: parseFloat(data.usage_hours),
+      oxygen_avg: parseFloat(data.oxygen_avg),
+      mask_leak: !!data.mask_leak,
+      resp_rate: parseFloat(data.resp_rate),
+      insp_pressure: parseFloat(data.insp_pressure),
+      exp_pressure: parseFloat(data.exp_pressure),
+    });
+
+    document.getElementById('therapyScore').textContent = score;
+    document.getElementById('usageHours').textContent = data.usage_hours;
+    document.getElementById('oxygenLevel').textContent = data.oxygen_avg + '%';
+    document.getElementById('maskLeak').textContent = data.mask_leak;
+    document.getElementById('respRate').textContent = data.resp_rate;
+    document.getElementById('tidalVolume').textContent = data.tidal_volume;
+    document.getElementById('minuteVentilation').textContent =
+      data.minute_ventilation;
+
+    updateRangeIndicators();
+  } catch (err) {
+    console.error('Error loading daily patient data:', err);
     displayNoDataMessage();
   }
 }
