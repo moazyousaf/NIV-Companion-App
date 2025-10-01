@@ -31,6 +31,83 @@ const demoData = {
   therapy_score: 85,
 };
 
+function updateRangeIndicators() {
+  const therapy =
+    parseFloat(document.getElementById('therapyScore').textContent) || 0;
+
+  const usage =
+    parseFloat(document.getElementById('usageHours').textContent) || 0;
+  const oxygen =
+    parseFloat(document.getElementById('oxygenLevel').textContent) || 0;
+  const mask = parseFloat(document.getElementById('maskLeak').textContent) || 0;
+  const resp = parseFloat(document.getElementById('respRate').textContent) || 0;
+  const tidal =
+    parseFloat(document.getElementById('tidalVolume').textContent) || 0;
+  const minute =
+    parseFloat(document.getElementById('minuteVentilation').textContent) || 0;
+
+  updateIndicator('therapyIndicator', therapy, [
+    { min: 80, class: 'range-good', text: 'Excellent therapy' },
+    { min: 60, class: 'range-warning', text: 'Needs improvement' },
+    { min: 0, class: 'range-danger', text: 'Poor therapy' },
+  ]);
+
+  updateIndicator('usageIndicator', usage, [
+    { min: 6, class: 'range-good', text: 'Great nightly usage' },
+    { min: 4, class: 'range-warning', text: 'Moderate usage – aim for 6h+' },
+    { min: 0, class: 'range-danger', text: 'Low usage' },
+  ]);
+
+  updateIndicator('oxygenIndicator', oxygen, [
+    { min: 95, class: 'range-good', text: 'Excellent oxygenation' },
+    { min: 90, class: 'range-warning', text: 'Borderline oxygen – monitor' },
+    { min: 0, class: 'range-danger', text: 'Low oxygen – seek help' },
+  ]);
+
+  updateIndicator('maskIndicator', mask, [
+    { min: 0, max: 23, class: 'range-good', text: 'Excellent seal' },
+    { min: 24, max: 35, class: 'range-warning', text: 'Moderate leak' },
+    { min: 36, max: 999, class: 'range-danger', text: 'High leak' },
+  ]);
+
+  updateIndicator('respIndicator', resp, [
+    { min: 12, class: 'range-good', text: 'Normal breathing rate' },
+    { min: 10, class: 'range-warning', text: 'Slightly irregular' },
+    { min: 0, class: 'range-danger', text: 'Outside safe range' },
+  ]);
+
+  updateIndicator('tidalIndicator', tidal, [
+    { min: 350, max: 550, class: 'range-good', text: 'Normal breathing' },
+    { min: 250, max: 349, class: 'range-warning', text: 'Slightly shallow' },
+    { min: 551, max: 650, class: 'range-warning', text: 'Slightly deep' },
+    { min: 0, max: 249, class: 'range-danger', text: 'Very shallow' },
+    { min: 651, max: 999, class: 'range-danger', text: 'Very deep' },
+  ]);
+
+  updateIndicator('minuteIndicator', minute, [
+    {
+      min: 9,
+      max: 999,
+      class: 'range-danger',
+      text: 'Increased work of breathing',
+    },
+    { min: 5, max: 8, class: 'range-good', text: 'Adequate ventilation' },
+    { min: 0, max: 4, class: 'range-danger', text: 'Critical ventilation' },
+  ]);
+}
+
+// helper to apply classes & text
+function updateIndicator(id, value, thresholds) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('range-good', 'range-warning', 'range-danger');
+  const t =
+    thresholds.find((th) => value >= th.min) ||
+    thresholds[thresholds.length - 1];
+  el.classList.add(t.class);
+  el.textContent = t.text;
+}
+
 // Update dashboard with demo data
 function updateDashboard() {
   document.getElementById('therapyScore').textContent =
@@ -43,6 +120,8 @@ function updateDashboard() {
     : 'Good';
   document.getElementById('respRate').textContent = demoData.resp_rate;
   document.getElementById('tidalVolume').textContent = demoData.tidal_volume;
+
+  updateRangeIndicators();
 }
 
 // Compute intelligent therapy score (matching your algorithm)
@@ -266,7 +345,7 @@ async function loadPatientData(id) {
     }
 
     const profileData = await response.json();
-    patientData = profileData.latest_data;
+    patientData = profileData[profileData.length - 1];
     console.log('Profile data loaded:', profileData);
 
     if (!patientData) {
@@ -369,6 +448,83 @@ async function loadPatientDay(patientId, day) {
     console.error('Error loading daily patient data:', err);
     displayNoDataMessage();
   }
+}
+
+async function load7DayTrends(patientId) {
+  const token = localStorage.getItem('token');
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/patient/${patientId}/days`,
+      {
+        headers: {
+          'Authorization': 'Bearer ' + token,
+        },
+      }
+    );
+    const days = await response.json();
+
+    const chartContainer = document.getElementById('trendsChart');
+    const msg = document.getElementById('noTrendsMsg');
+
+    // 🔴 If not enough days, hide the chart and show a message
+    if (days.length < 7) {
+      chartContainer.style.display = 'none'; // hide chart
+      msg.style.display = 'block'; // show fallback message
+      return; // stop execution here
+    }
+    // If we have 7+ days, show the chart and hide the message
+    chartContainer.style.display = 'block';
+    msg.style.display = 'none';
+
+    // Take last 7 days
+    const last7Days = days.slice(-7);
+
+    const labels = [];
+    const usageData = [];
+    const oxygenData = [];
+    const scoreData = [];
+
+    for (const d of last7Days) {
+      const dateString = d.day;
+      const dayResp = await fetch(
+        `http://localhost:5000/api/patient/${patientId}/day/${dateString}`,
+        {
+          headers: {
+            'Authorization': 'Bearer ' + token,
+          },
+        }
+      );
+      const dayData = await dayResp.json();
+
+      labels.push(dateString);
+      usageData.push(parseFloat(dayData.usage_hours));
+      oxygenData.push(parseFloat(dayData.oxygen_avg));
+      scoreData.push(
+        computeIntelligentScore({
+          usage_hours: parseFloat(dayData.usage_hours),
+          oxygen_avg: parseFloat(dayData.oxygen_avg),
+          mask_leak: parseFloat(dayData.mask_leak),
+          resp_rate: parseFloat(dayData.resp_rate),
+          insp_pressure: parseFloat(dayData.insp_pressure),
+          exp_pressure: parseFloat(dayData.exp_pressure),
+        })
+      );
+    }
+
+    initTrendsChart(labels, usageData, oxygenData, scoreData);
+  } catch (err) {
+    console.error('Error loading 7-day trends:', err);
+  }
+}
+
+function displayNoDataMessage() {
+  document.getElementById('therapyScore').textContent = 'No Data';
+  document.getElementById('usageHours').textContent = 'No Data';
+  document.getElementById('oxygenLevel').textContent = 'No Data';
+  document.getElementById('maskLeak').textContent = 'No Data';
+  document.getElementById('respRate').textContent = 'No Data';
+  document.getElementById('tidalVolume').textContent = 'No Data';
+  document.getElementById('minuteVentilation').textContent = 'No Data';
 }
 
 function updateApiStatus(message, type) {
