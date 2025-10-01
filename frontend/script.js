@@ -1,3 +1,4 @@
+let currentPatientId = null;
 // Tab switching functionality
 function switchTab(tabName) {
   // Hide all tab contents
@@ -255,8 +256,13 @@ async function loadPatients() {
       option.textContent = name;
       select.appendChild(option);
 
+      currentPatientId = id;
+      loadPatientData(id);
+      loadPatientDays(id);
+      load7DayTrends(id);
+
       updateApiStatus('✅ Logged in as patient', 'success');
-      return; // stop here
+      return;
     }
 
     // ✅ DOCTOR: fetch full list
