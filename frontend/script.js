@@ -500,8 +500,8 @@ async function load7DayTrends(patientId) {
           },
         }
       );
-      const dayData = await dayResp.json();
-
+      const datArr = await dayResp.json();
+      const dayData = datArr[0];
       labels.push(dateString);
       usageData.push(parseFloat(dayData.usage_hours));
       oxygenData.push(parseFloat(dayData.oxygen_avg));
