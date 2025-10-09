@@ -23,10 +23,7 @@ function switchTab(tabName) {
 const logout = document.getElementById('logoutBtn');
 
 logout.addEventListener('click', () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('id');
-  localStorage.removeItem('name');
-  localStorage.removeItem('role');
+  localStorage.clear();
 
   window.location.href = 'landing.html';
 });
@@ -576,6 +573,12 @@ function createStatusElement() {
 // Initialize app
 document.addEventListener('DOMContentLoaded', function () {
   console.log('=== NIV Companion App Starting ===');
+
+  const token = localStorage.getItem('token');
+  if (!token) {
+    window.location.href = 'landing.html';
+    return;
+  }
 
   loadPatients();
 
