@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NIV Companion - Understanding Your Therapy</title>
+
+    <link rel="stylesheet" href="style.css" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  </head>
+  <body class="dashboard-body">
+    <div class="container">
+      <div class="header">
+        <h1>🫁 NIV Companion</h1>
+        <p>Understanding Your Non-Invasive Ventilation Therapy</p>
+        <button class="logout-btn" id="logoutBtn">logout</button>
+      </div>
+
+      <div class="demo-mode">
+        📊 Demo Mode - Connect to your NIV data API at localhost:5000
+      </div>
+
+      <nav class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('dashboard')">
+          Dashboard
+        </button>
+        <button class="tab-btn" onclick="switchTab('education')">
+          Learn About NIV
+        </button>
+        <button class="tab-btn" onclick="switchTab('metrics')">
+          Understanding Metrics
+        </button>
+        <button class="tab-btn" onclick="switchTab('trends')">
+          Your Trends
+        </button>
+        <button class="tab-btn" onclick="switchTab('tips')">
+          Tips & Goals
+        </button>
+      </nav>
+
+      <!-- Dashboard Tab -->
+      <div id="dashboard" class="tab-content active">
+        <div class="patient-selector">
+          <label for="patientSelect"><strong>Select Patient:</strong></label>
+          <select id="patientSelect">
+            <option value="demo">Demo Patient (Sample Data)</option>
+          </select>
+
+          <div class="day-selector">
+            <label for="daySelect"><strong>Select Day:</strong></label>
+            <select id="daySelect">
+              <option value="">Select a day</option>
+            </select>
+          </div>
+        </div>
+
+        <h2 class="section-title">Your Current Therapy Status</h2>
+
+        <div class="therapy-grid">
+          <div class="therapy-metric-card">
+            <div class="metric-title">Therapy Score</div>
+            <div class="metric-value" id="therapyScore">85</div>
+            <div class="range-indicator" id="therapyIndicator">
+              Excellent Progress!
+            </div>
+            <div class="metric-description">
+              Overall therapy effectiveness based on multiple factors
+            </div>
+          </div>
+        </div>
+
+        <div class="data-grid">
+          <div class="metric-card">
+            <div class="metric-title">Usage Hours</div>
+            <div class="metric-value" id="usageHours">7.2</div>
+            <div class="range-indicator" id="usageIndicator">
+              Goal: 6+ hours
+            </div>
+            <div class="metric-description">Hours of therapy per night</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-title">Oxygen Level</div>
+            <div class="metric-value" id="oxygenLevel">94%</div>
+            <div class="range-indicator" id="oxygenIndicator">Normal Range</div>
+            <div class="metric-description">
+              Average blood oxygen saturation
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-title">Mask Fit (L/min)</div>
+            <div class="metric-value" id="maskLeak">Good</div>
+            <div class="range-indicator" id="maskIndicator">
+              No significant leaks
+            </div>
+            <div class="metric-description">Mask seal quality</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-title">Respiratory Rate</div>
+            <div class="metric-value" id="respRate">16</div>
+            <div class="range-indicator" id="respIndicator">Normal: 12-20</div>
+            <div class="metric-description">Breaths per minute</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-title">Tidal Volume</div>
+            <div class="metric-value" id="tidalVolume">480</div>
+            <div class="range-indicator" id="tidalIndicator">mL per breath</div>
+            <div class="metric-description">Volume of air per breath</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-title">Minute Ventilation</div>
+            <div class="metric-value" id="minuteVentilation">6.75</div>
+            <div class="range-indicator" id="minuteIndicator">Normal Range</div>
+            <div class="metric-description">
+              Volume of air breathed in a minute
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Education Tab -->
+      <div id="education" class="tab-content">
+        <h2 class="section-title">Understanding NIV Therapy</h2>
+
+        <div class="card">
+          <h3>What is Non-Invasive Ventilation (NIV)?</h3>
+          <p>
+            NIV is a treatment that helps you breathe more effectively without
+            the need for invasive procedures. It delivers pressurized air
+            through a mask to support your breathing, especially during sleep or
+            when your breathing muscles need assistance.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>How Does Your NIV Machine Work?</h3>
+          <p>
+            <strong>IPAP (Inspiratory Pressure):</strong> Higher pressure
+            delivered when you breathe in, helping expand your lungs and deliver
+            more oxygen.
+          </p>
+          <p>
+            <strong>EPAP (Expiratory Pressure):</strong> Lower pressure
+            maintained when you breathe out, keeping your airways open and
+            preventing collapse.
+          </p>
+          <p>
+            <strong>Backup Rate:</strong> If you don't breathe within a set
+            time, the machine automatically delivers a breath.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Types of NIV Therapy</h3>
+          <p>
+            <strong>BiPAP/BiLevel:</strong> Two different pressure levels for
+            breathing in and out
+          </p>
+          <p>
+            <strong>CPAP:</strong> Continuous positive pressure to keep airways
+            open
+          </p>
+          <p>
+            <strong>AVAPS:</strong> Automatically adjusts pressures to maintain
+            target tidal volume
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Benefits of Consistent NIV Use</h3>
+          <ul style="margin-left: 20px; margin-top: 10px">
+            <li>Improved blood oxygen levels</li>
+            <li>Reduced work of breathing</li>
+            <li>Better sleep quality</li>
+            <li>Increased energy during the day</li>
+            <li>Reduced risk of respiratory failure</li>
+            <li>Improved quality of life</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Metrics Tab -->
+      <div id="metrics" class="tab-content">
+        <h2 class="section-title">Understanding Your NIV Data</h2>
+
+        <div class="data-grid">
+          <div class="education-section">
+            <h3>Usage Hours</h3>
+            <p>
+              <strong>What it means:</strong> How long you used the NIV machine
+              each night
+            </p>
+            <p>
+              <strong>Target:</strong> 6+ hours per night for optimal benefits
+            </p>
+            <p>
+              <strong>Why it matters:</strong> Consistent use ensures your body
+              gets the respiratory support it needs throughout the night
+            </p>
+          </div>
+
+          <div class="education-section">
+            <h3>Oxygen Saturation (SpO2)</h3>
+            <p>
+              <strong>What it means:</strong> Percentage of oxygen in your blood
+            </p>
+            <p>
+              <strong>Normal range:</strong> 95-100% (88-92% may be acceptable
+              for some conditions)
+            </p>
+            <p>
+              <strong>Why it matters:</strong> Shows how well your lungs are
+              transferring oxygen to your blood
+            </p>
+          </div>
+
+          <div class="education-section">
+            <h3>Respiratory Rate</h3>
+            <p><strong>What it means:</strong> Number of breaths per minute</p>
+            <p>
+              <strong>Normal range:</strong> 12-20 breaths per minute at rest
+            </p>
+            <p>
+              <strong>Why it matters:</strong> Indicates breathing efficiency
+              and respiratory status
+            </p>
+          </div>
+
+          <div class="education-section">
+            <h3>Tidal Volume</h3>
+            <p>
+              <strong>What it means:</strong> Amount of air moved in and out
+              with each breath
+            </p>
+            <p><strong>Normal range:</strong> 400-600 mL for adults</p>
+            <p>
+              <strong>Why it matters:</strong> Shows how effectively each breath
+              ventilates your lungs
+            </p>
+          </div>
+
+          <div class="education-section">
+            <h3>Minute Ventilation</h3>
+            <p>
+              <strong>What it means:</strong> Total volume of air breathed per
+              minute (Tidal Volume × Respiratory Rate)
+            </p>
+            <p><strong>Normal range:</strong> 5-8 L/min at rest</p>
+            <p>
+              <strong>Why it matters:</strong> Overall measure of breathing
+              adequacy
+            </p>
+          </div>
+
+          <div class="education-section">
+            <h3>Mask Leak</h3>
+            <p>
+              <strong>What it means:</strong> Air escaping from around your mask
+            </p>
+            <p>
+              <strong>Acceptable:</strong> Small leaks are normal, large leaks
+              reduce therapy effectiveness
+            </p>
+            <p>
+              <strong>Why it matters:</strong> Proper seal ensures you receive
+              the prescribed pressure
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trends Tab -->
+      <div id="trends" class="tab-content">
+        <h2 class="section-title">Your Therapy Trends</h2>
+
+        <div class="chart-container trends-chart-wrapper">
+          <canvas id="trendsChart"></canvas>
+          <p id="noTrendsMsg" class="no-trends-msg">
+            Not enough data to show charts!
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Trend Analysis</h3>
+          <p>
+            Tracking your therapy data over time helps identify patterns and
+            improvements. Look for:
+          </p>
+          <ul style="margin-left: 20px; margin-top: 10px">
+            <li>
+              <strong>Consistent usage:</strong> Steady usage hours each night
+            </li>
+            <li>
+              <strong>Stable oxygen levels:</strong> SpO2 remaining in target
+              range
+            </li>
+            <li>
+              <strong>Improving leak rates:</strong> Better mask fit over time
+            </li>
+            <li>
+              <strong>Optimal respiratory patterns:</strong> Steady breathing
+              rates and volumes
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Tips Tab -->
+      <div id="tips" class="tab-content">
+        <h2 class="section-title">Tips for Better NIV Therapy</h2>
+
+        <div class="tips-grid">
+          <div class="tip-card">
+            <h4>🎭 Mask Fit Tips</h4>
+            <ul>
+              <li>Clean your mask daily with mild soap</li>
+              <li>Replace cushions every 2-3 months</li>
+              <li>
+                Adjust straps when you put the mask on, not while lying down
+              </li>
+              <li>Try different mask styles if leaks persist</li>
+            </ul>
+          </div>
+
+          <div class="tip-card">
+            <h4>😴 Sleep Quality</h4>
+            <ul>
+              <li>Use your NIV every night, even for naps</li>
+              <li>Keep a consistent bedtime routine</li>
+              <li>Position your head slightly elevated</li>
+              <li>Use a humidifier if your throat gets dry</li>
+            </ul>
+          </div>
+
+          <div class="tip-card">
+            <h4>🔧 Equipment Care</h4>
+            <ul>
+              <li>Clean filters weekly or as recommended</li>
+              <li>Check tubing for cracks or holes</li>
+              <li>Keep equipment away from heat sources</li>
+              <li>Have backup power ready for outages</li>
+            </ul>
+          </div>
+
+          <div class="tip-card">
+            <h4>📊 Monitoring Progress</h4>
+            <ul>
+              <li>Review your data weekly with this app</li>
+              <li>Keep a therapy journal of how you feel</li>
+              <li>Note any changes in your condition</li>
+              <li>Share data trends with your healthcare team</li>
+            </ul>
+          </div>
+
+          <div class="tip-card">
+            <h4>🚨 When to Contact Your Doctor</h4>
+            <ul>
+              <li>Persistent mask leaks despite adjustments</li>
+              <li>Oxygen levels consistently below target</li>
+              <li>Increased shortness of breath</li>
+              <li>Equipment malfunctions or alarms</li>
+            </ul>
+          </div>
+
+          <div class="tip-card">
+            <h4>🎯 Therapy Goals</h4>
+            <ul>
+              <li>Use NIV 6+ hours per night</li>
+              <li>Maintain SpO2 in your target range</li>
+              <li>Minimize mask leaks</li>
+              <li>Achieve stable respiratory patterns</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
