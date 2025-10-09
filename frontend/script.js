@@ -19,6 +19,18 @@ function switchTab(tabName) {
   }
 }
 
+//logout button
+const logout = document.getElementById('logoutBtn');
+
+logout.addEventListener('click', () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('id');
+  localStorage.removeItem('name');
+  localStorage.removeItem('role');
+
+  window.location.href = 'landing.html';
+});
+
 // Demo data and functionality
 const demoData = {
   usage_hours: 7.2,
@@ -564,6 +576,7 @@ function createStatusElement() {
 // Initialize app
 document.addEventListener('DOMContentLoaded', function () {
   console.log('=== NIV Companion App Starting ===');
+
   loadPatients();
 
   // Only show demo dashboard if we haven't loaded real patients
