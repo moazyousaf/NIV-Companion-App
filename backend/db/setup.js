@@ -40,6 +40,7 @@ async function setupDatabase() {
         insp_pressure NUMERIC,
         exp_pressure NUMERIC,
         insp_time NUMERIC,
+        ai_briefing TEXT,
         timestamp TIMESTAMP NOT NULL
       );
     `);
