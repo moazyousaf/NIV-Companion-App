@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NIV Companion - Landing</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="landing-body">
+    <div class="landing-container">
+      <h1>Welcome to NIV Companion</h1>
+      <p>Track your therapy, understand metrics, and improve outcomes</p>
+      <div class="buttons">
+        <a href="#" class="Accedi" id="login">Accedi</a>
+        <a href="#" class="Registrati" id="registrati">Registrati</a>
+      </div>
+    </div>
+
+    <!--registration modal-->
+    <div class="modal" id="register-modal">
+      <div class="modal-content">
+        <h2>Registrati</h2>
+        <p id="register-error" class="text-danger"></p>
+        <form id="register-form">
+          <select name="role" required>
+            <option value="">Select role</option>
+            <option value="patient">Patient</option>
+            <option value="doctor">Doctor</option>
+          </select>
+
+          <input type="text" name="name" placeholder="Nome" required />
+          <input type="email" name="email" placeholder="Email" required />
+          <input type="password" name="pass" placeholder="Password" required />
+          <input
+            type="password"
+            name="confirm"
+            placeholder="Conferma Password"
+            required
+          />
+          <input
+            type="submit"
+            name="submit"
+            value="Registrati"
+            class="submit-btn"
+          />
+        </form>
+        <button id="close-register-modal" class="close-btn">Chiudi</button>
+      </div>
+    </div>
+
+    <!--login modal-->
+    <div class="modal" id="login-modal">
+      <div class="modal-content">
+        <h2>Accedi</h2>
+        <p id="login-error" class="text-danger"></p>
+        <form id="login-form">
+          <input type="email" name="email" placeholder="Email" required />
+          <input type="password" name="pass" placeholder="Password" required />
+          <input
+            type="submit"
+            name="submit"
+            value="Accedi"
+            class="submit-btn"
+          />
+        </form>
+        <button id="close-login-modal" class="close-btn">Chiudi</button>
+      </div>
+    </div>
+
+    <script src="landing.js"></script>
+  </body>
+</html>
