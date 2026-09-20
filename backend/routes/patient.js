@@ -5,6 +5,8 @@ const { authenticateToken, authorizeDoctor } = require('./authMiddleware');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 //router responses
 
@@ -118,6 +120,90 @@ router.get('/:id/day/:day', authenticateToken, async (req, res) => {
     res
       .status(500)
       .json({ error: "Database error during patient's day data fetching" });
+  }
+});
+
+// Rotta per generare o recuperare il Briefing Mattutino dell'AI
+router.get('/:id/day/:day/briefing', authenticateToken, async (req, res) => {
+  const requestedId = req.params.id;
+  const day = req.params.day;
+  const user = req.user;
+
+  if (!requestedId || !day) {
+    return res.status(400).send('Patient ID or DAY is missing or invalid');
+  }
+
+  // Controllo permessi
+  if (user.role === 'patient' && user.id != requestedId) {
+    return res
+      .status(403)
+      .json({ error: 'Patients can only access their own data' });
+  }
+
+  try {
+    // 1. Controlliamo se esiste già un briefing salvato per questa giornata
+    const checkQuery = `
+      SELECT ai_briefing FROM niv_data 
+      WHERE patient_id = $1 AND timestamp::date = $2::date AND ai_briefing IS NOT NULL 
+      LIMIT 1
+    `;
+    const existingBriefing = await db.oneOrNone(checkQuery, [requestedId, day]);
+
+    if (existingBriefing && existingBriefing.ai_briefing) {
+      // Se c'è già, lo restituiamo senza chiamare le API di Google
+      return res.json({ briefing: existingBriefing.ai_briefing });
+    }
+
+    // 2. Se non esiste, recuperiamo i dati medi della giornata per passarli all'AI
+    const dataQuery = `
+      SELECT 
+        SUM(usage_hours) AS usage_hours,
+        ROUND(AVG(oxygen_avg)::numeric,2) AS oxygen_avg,
+        ROUND(AVG(mask_leak)::numeric,2) AS mask_leak
+      FROM niv_data 
+      WHERE patient_id = $1 AND timestamp::date = $2::date
+    `;
+    const dayData = await db.oneOrNone(dataQuery, [requestedId, day]);
+
+    if (!dayData || dayData.usage_hours == null) {
+      return res
+        .status(400)
+        .send('Nessun dato disponibile per generare il briefing.');
+    }
+
+    // 3. Costruiamo il prompt per Gemini
+    const prompt = `
+      Sei un assistente medico virtuale per la terapia NIV (ventilazione non invasiva).
+      Analizza questi dati medi della notte del paziente:
+      - Ore di utilizzo totali: ${dayData.usage_hours} ore (L'obiettivo è > 6 ore)
+      - Ossigeno medio: ${dayData.oxygen_avg}% (L'obiettivo è > 90%)
+      - Perdita maschera media: ${dayData.mask_leak} L/min (Sotto i 24 è eccellente, sopra 35 è alta)
+      
+      Scrivi un riassunto mattutino di massimo 3 frasi. Rivolgiti direttamente al paziente con un tono empatico, rassicurante e incoraggiante. Sii conciso ma analitico sui tre parametri.
+    `;
+
+    // 4. Chiamiamo Gemini
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+    const result = await model.generateContent(prompt);
+    const briefingText = result.response.text();
+
+    // 5. Salviamo il briefing nel database per le prossime volte
+    const updateQuery = `
+      UPDATE niv_data 
+      SET ai_briefing = $3 
+      WHERE patient_id = $1 AND timestamp::date = $2::date
+    `;
+    await db.none(updateQuery, [requestedId, day, briefingText]);
+
+    // 6. Restituiamo il risultato al frontend
+    res.json({ briefing: briefingText });
+  } catch (err) {
+    console.error('Errore durante la generazione del briefing:', err);
+    res
+      .status(500)
+      .json({
+        error: "Errore durante l'analisi dell'Intelligenza Artificiale",
+      });
   }
 });
 
