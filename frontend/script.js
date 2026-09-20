@@ -162,7 +162,7 @@ function computeIntelligentScore(data) {
         oxygenScore * oxygenWeight +
         leakScore * leakWeight +
         respScore * respWeight +
-        pressureScore * pressureWeight)
+        pressureScore * pressureWeight),
   );
 }
 
@@ -173,7 +173,7 @@ function initTrendsChart(
   labels = [],
   usageData = [],
   oxygenData = [],
-  scoreData = []
+  scoreData = [],
 ) {
   if (trendsChart) {
     trendsChart.destroy();
@@ -299,13 +299,13 @@ async function loadPatients() {
       // Update status message
       updateApiStatus(
         `✅ Connected - Found ${patients.length} patients`,
-        'success'
+        'success',
       );
     } else {
       console.log('No patients found in database');
       updateApiStatus(
         '⚠️ Connected but no patients found in database',
-        'warning'
+        'warning',
       );
     }
 
@@ -406,7 +406,7 @@ async function loadPatientDays(patientId) {
         headers: {
           'Authorization': 'Bearer ' + token,
         },
-      }
+      },
     );
     const days = await response.json();
     const select = document.getElementById('daySelect');
@@ -435,7 +435,7 @@ async function loadPatientDay(patientId, day) {
         headers: {
           'Authorization': 'Bearer ' + token,
         },
-      }
+      },
     );
     const dataArr = await response.json();
     const data = dataArr[0];
@@ -459,6 +459,27 @@ async function loadPatientDay(patientId, day) {
       data.minute_ventilation;
 
     updateRangeIndicators();
+
+    // --- INIZIO CHIAMATA AI BRIEFING ---
+    const briefingElement = document.getElementById('aiBriefingText');
+    briefingElement.textContent = "Generazione dell'analisi in corso... ⏳";
+
+    try {
+      const aiResponse = await fetch(
+        `http://localhost:5000/api/patient/${patientId}/day/${day}/briefing`,
+        {
+          headers: { 'Authorization': 'Bearer ' + token },
+        },
+      );
+      const aiData = await aiResponse.json();
+      briefingElement.textContent =
+        aiData.briefing || 'Nessun briefing disponibile per questa data.';
+    } catch (aiErr) {
+      console.error('Errore nel caricamento del briefing AI:', aiErr);
+      briefingElement.textContent =
+        "Errore di connessione con l'Intelligenza Artificiale.";
+    }
+    // --- FINE CHIAMATA AI BRIEFING ---
   } catch (err) {
     console.error('Error loading daily patient data:', err);
     displayNoDataMessage();
@@ -474,7 +495,7 @@ async function load7DayTrends(patientId) {
         headers: {
           'Authorization': 'Bearer ' + token,
         },
-      }
+      },
     );
     const days = await response.json();
 
@@ -507,7 +528,7 @@ async function load7DayTrends(patientId) {
           headers: {
             'Authorization': 'Bearer ' + token,
           },
-        }
+        },
       );
       const datArr = await dayResp.json();
       const dayData = datArr[0];
@@ -522,7 +543,7 @@ async function load7DayTrends(patientId) {
           resp_rate: parseFloat(dayData.resp_rate),
           insp_pressure: parseFloat(dayData.insp_pressure),
           exp_pressure: parseFloat(dayData.exp_pressure),
-        })
+        }),
       );
     }
 
