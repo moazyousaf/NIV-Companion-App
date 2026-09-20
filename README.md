@@ -6,16 +6,17 @@ Un'applicazione intuitiva per il monitoraggio e la comprensione della terapia di
 
 ## 🛠️ Tecnologie Utilizzate
 
-*   **Frontend:** HTML5, CSS3, JavaScript (Vanilla), Chart.js (per i grafici)
-*   **Backend:** Node.js, Express.js
-*   **Database:** PostgreSQL (con libreria `pg-promise`)
-*   **Autenticazione:** JSON Web Tokens (JWT) e `bcrypt` per le password
+- **Frontend:** HTML5, CSS3, JavaScript (Vanilla), Chart.js (per i grafici)
+- **Backend:** Node.js, Express.js
+- **Database:** PostgreSQL (con libreria `pg-promise`)
+- **Autenticazione:** JSON Web Tokens (JWT) e `bcrypt` per le password
 
 ---
 
 ## 📋 Prerequisiti
 
 Per eseguire questo progetto sul tuo computer, devi avere installato:
+
 1.  [Node.js](https://nodejs.org/) (versione 16 o superiore)
 2.  [PostgreSQL](https://www.postgresql.org/) (assicurati di avere un database vuoto pronto per l'uso)
 
@@ -26,13 +27,16 @@ Per eseguire questo progetto sul tuo computer, devi avere installato:
 Segui questi semplici passaggi per configurare l'intero ambiente in pochi minuti.
 
 ### 1. Configura il Backend
+
 Apri il terminale, naviga nella cartella del progetto ed entra nella cartella `backend`:
+
 ```bash
 cd backend
 npm install
 ```
 
 ### 2. Configura le Variabili d'Ambiente
+
 Crea un file chiamato esattamente **`.env`** (senza estensioni come .txt) all'interno della cartella `backend` e inserisci le tue credenziali del database e una chiave segreta a tua scelta:
 
 ```env
@@ -41,23 +45,32 @@ DATABASE_URL=postgres://tuo_utente:tua_password@localhost:5432/nome_database
 
 # Inserisci una parola o frase segreta casuale per generare i token di accesso
 JWT_SECRET=una_chiave_segreta_molto_sicura
+
+# Insierisci la tua API key
+GEMINI_API_KEY=la_tua_chiave_api
 ```
 
 ### 3. Inizializza il Database
+
 Abbiamo creato uno script automatizzato che genera le tabelle necessarie, crea un paziente di test e inserisce 7 giorni di dati fittizi. Esegui semplicemente:
+
 ```bash
 npm run setup
 ```
+
 > **Nota bene:** Al termine di questo processo, il terminale ti mostrerà l'**Email** e la **Password** da utilizzare per accedere all'applicazione!
 
 ### 4. Avvia il Server
+
 Una volta che il database è pronto, avvia il server backend (che rimarrà in ascolto sulla porta 5000):
+
 ```bash
 npm run devStart
 ```
 
 ### 5. Avvia il Frontend
-Lascia il terminale aperto e funzionante. Ora naviga nella cartella `frontend` del progetto. 
+
+Lascia il terminale aperto e funzionante. Ora naviga nella cartella `frontend` del progetto.
 Per la migliore esperienza (ed evitare blocchi CORS del browser), ti consigliamo di aprire il file `landing.html` utilizzando un server locale, come l'estensione **Live Server** di Visual Studio Code. In alternativa, puoi provare a fare doppio clic sul file `landing.html` per aprirlo direttamente nel tuo browser.
 
 ---
